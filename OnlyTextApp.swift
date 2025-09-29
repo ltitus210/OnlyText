@@ -9,11 +9,11 @@ import SwiftUI
 import AppKit
 
 @main
-struct OnlyTestApp: App {
+struct OnlyTextApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        MenuBarExtra("OnlyTest", systemImage: "doc.on.clipboard") {
+        MenuBarExtra("OnlyText", systemImage: "doc.on.clipboard") {
             SettingsView()
                 .frame(width: 320)
             Divider()
