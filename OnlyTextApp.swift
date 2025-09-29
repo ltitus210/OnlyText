@@ -22,6 +22,7 @@ struct OnlyTextApp: App {
             }
             Divider()
             Button("Quit") { NSApplication.shared.terminate(nil) }
+            .padding(.bottom, 8)
         }
         .menuBarExtraStyle(.window)
     }
