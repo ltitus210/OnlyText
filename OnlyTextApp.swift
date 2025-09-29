@@ -29,9 +29,18 @@ struct OnlyTextApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Hide from Dock & Cmd-Tab; menu-bar only
+        // Menu-bar only
         NSApp.setActivationPolicy(.accessory)
+
+        // Ensure default is ON at first launch so monitoring is active immediately.
+        UserDefaults.standard.register(defaults: [
+            "enabled": true
+        ])
+
+        // Start monitoring and perform an initial clean so it works right away
+        // even if the clipboard already contains rich text when the app launches.
         PasteboardMonitor.shared.start()
+        PasteboardMonitor.shared.cleanClipboardIfNeeded(force: false)
     }
 }
 
