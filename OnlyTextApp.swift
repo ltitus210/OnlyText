@@ -3,11 +3,11 @@
 //  OnlyText
 //
 //  Created by Larry Titus on 9/28/25.
-//  Version 1.1
 //
 
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers   // ⟵ Added
 
 // Simple helper to read the marketing version (CFBundleShortVersionString).
 // Update the Version in your target’s Info tab; this will reflect it automatically.
@@ -126,7 +126,25 @@ final class PasteboardMonitor {
 
         guard let items = pb.pasteboardItems, !items.isEmpty else { return }
 
-        // If any item contains RTF/HTML, convert to plain and replace clipboard.
+        // If ANY item exposes a non-textual/binary type (images, PDFs, audio/video, file URLs, etc.),
+        // leave the clipboard untouched to avoid stripping rich content.
+        let hasNonTextual: Bool = items.contains { item in
+            item.types.contains { t in
+                let raw = t.rawValue
+                // Ignore NSPasteboard internal helper types
+                if raw.hasPrefix("org.nspasteboard.") { return false }
+                if let ut = UTType(raw) {
+                    // Treat text/RTF/HTML/URL as textual; everything else is non-textual.
+                    return !(ut.conforms(to: .text) || ut == .rtf || ut == .html || ut == .url)
+                } else {
+                    // Fallback for common types if UTType init fails
+                    return !(t == .string || t == .rtf || t == .html)
+                }
+            }
+        }
+        if hasNonTextual { return }
+
+        // Convert rich text (RTF/HTML) to plain text; if already plain, do nothing.
         for item in items {
             if let plain = extractPlainText(from: item) {
                 pb.clearContents()
