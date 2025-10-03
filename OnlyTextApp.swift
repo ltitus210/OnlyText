@@ -3,10 +3,20 @@
 //  OnlyText
 //
 //  Created by Larry Titus on 9/28/25.
+//  Version 1.1
 //
 
 import SwiftUI
 import AppKit
+
+// Simple helper to read the marketing version (CFBundleShortVersionString).
+// Update the Version in your target’s Info tab; this will reflect it automatically.
+struct AppInfo {
+    static var versionTag: String {
+        let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        return "v\(v)"
+    }
+}
 
 @main
 struct OnlyTextApp: App {
@@ -22,7 +32,17 @@ struct OnlyTextApp: App {
             }
             Divider()
             Button("Quit") { NSApplication.shared.terminate(nil) }
-            .padding(.bottom, 8)
+                .padding(.bottom, 8)
+
+            // Version footer
+            Divider()
+            HStack {
+                Spacer()
+                Text("OnlyText \(AppInfo.versionTag)")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
         }
         .menuBarExtraStyle(.window)
     }
@@ -51,7 +71,7 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Toggle("Enable Plain‑Text by Default", isOn: $enabled)
+            Toggle("Enable Plain-Text by Default", isOn: $enabled)
                 .toggleStyle(.switch)
                 .font(.headline)
 
@@ -138,3 +158,4 @@ final class PasteboardMonitor {
         return nil
     }
 }
+
