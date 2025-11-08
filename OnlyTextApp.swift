@@ -3,14 +3,15 @@
 //  OnlyText
 //
 //  Created by Larry Titus on 9/28/25
-//  Last Updated 03-Oct-2025
-//  Version 1.1
+//  Last Updated 08-Nov-2025
+//  Version 1.2
 //
 //  Overview:
 //  - Menu bar–only macOS app (no Dock icon, no Cmd-Tab entry).
 //  - Watches the system pasteboard and converts rich text (RTF/HTML) to plain text
 //    when enabled.
 //  - Leaves images and other non-text/binary clipboard content untouched.
+//  - Preserves line feeds / line breaks / carriage returns (maps U+2028/U+2029 to \n).
 //  - Shows a small version label in the popover footer (“OnlyText vX.Y”).
 //
 
@@ -52,6 +53,7 @@ struct OnlyTextApp: App {
 
             // Quit the app (terminates immediately).
             Button("Quit") { NSApplication.shared.terminate(nil) }
+            // (no padding here by request)
 
             // Version footer: small, subtle label at the bottom with padding.
             Divider()
@@ -201,6 +203,7 @@ final class PasteboardMonitor {
     }
 
     /// Extracts a plain-string representation from a rich pasteboard item, if possible.
+    /// - Preserves line breaks: converts U+2028/U+2029 to "\n", leaves "\n" and "\r" untouched.
     /// - Returns: The plain text for RTF/HTML items; `nil` if item is already plain text (or unsupported).
     private func extractPlainText(from item: NSPasteboardItem) -> String? {
         // Prefer decoding RTF to preserve content while stripping formatting.
@@ -210,7 +213,7 @@ final class PasteboardMonitor {
                options: [.documentType: NSAttributedString.DocumentType.rtf],
                documentAttributes: nil
            ) {
-            return attr.string
+            return preserveLineBreaks(attr.string)
         }
 
         // Fallback: decode HTML payload to text.
@@ -220,7 +223,7 @@ final class PasteboardMonitor {
                options: [.documentType: NSAttributedString.DocumentType.html],
                documentAttributes: nil
            ) {
-            return attr.string
+            return preserveLineBreaks(attr.string)
         }
 
         // If the item already includes a plain string flavor, we don't need to modify the clipboard.
@@ -228,5 +231,16 @@ final class PasteboardMonitor {
 
         // Not a known text representation we handle → leave unchanged.
         return nil
+    }
+
+    // MARK: - Line break preservation
+    /// Ensures line separators are retained when converting attributed text to plain text.
+    /// - We map Unicode line/paragraph separators (U+2028/U+2029) to "\n".
+    /// - We leave existing "\n" and "\r" untouched to avoid altering platform-specific line endings.
+    private func preserveLineBreaks(_ s: String) -> String {
+        var out = s
+        out = out.replacingOccurrences(of: "\u{2028}", with: "\n") // line separator → LF
+        out = out.replacingOccurrences(of: "\u{2029}", with: "\n") // paragraph separator → LF
+        return out
     }
 }
